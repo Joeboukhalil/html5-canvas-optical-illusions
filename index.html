@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Optical Illusion Selector</title>
+
+<style>
+body {
+    margin: 0;
+    background: #808080; /* Neutral gray base */
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+#canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Floating controls menu styling */
+#controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.75);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+label {
+    font-weight: bold;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+select {
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    outline: none;
+    width: 220px;
+}
+
+select:hover {
+    background: #444;
+}
+</style>
+</head>
+<body>
+
+<div id="controls">
+    <label for="illusionSelect">Choose An Illusion:</label>
+    <select id="illusionSelect">
+        <option value="peripheral">1. Peripheral Drift (Fake Motion)</option>
+        <option value="cafewall">2. Café Wall (Crooked Lines)</option>
+        <option value="grid">3. Hermann Grid (Phantom Dots)</option>
+    </select>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const select = document.getElementById("illusionSelect");
+
+let currentIllusion = "peripheral";
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    draw();
+}
+
+// --- ILLUSION 1: PERIPHERAL DRIFT ---
+function drawPeripheral() {
+    ctx.fillStyle = "#808080";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const numRings = 8;
+    const ringWidth = 40;
+    const colors = ["#ffffff", "#ffde00", "#000000", "#002fa7"]; 
+
+    for (let ring = 0; ring < numRings; ring++) {
+        const direction = ring % 2 === 0 ? 1 : -1; 
+        const innerRadius = 50 + ring * ringWidth;
+        const outerRadius = innerRadius + ringWidth;
+        const segments = 24 + ring * 8; 
+        const angleStep = (Math.PI * 2) / segments;
+        const subStep = angleStep / 4;
+
+        for (let i = 0; i < segments; i++) {
+            const baseAngle = i * angleStep;
+            for (let j = 0; j < 4; j++) {
+                const colorIndex = direction === 1 ? j : (3 - j);
+                ctx.fillStyle = colors[colorIndex];
+
+                const startAngle = baseAngle + j * subStep;
+                const endAngle = startAngle + subStep;
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, outerRadius, startAngle, endAngle);
+                ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+    }
+}
+
+// --- ILLUSION 2: CAFÉ WALL ---
+function drawCafeWall() {
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const rowHeight = 45;
+    const boxWidth = 90;
+    const numRows = Math.ceil(canvas.height / rowHeight);
+    const numCols = Math.ceil(canvas.width / boxWidth) + 2;
+
+    // Offsets per row to break structural alignment 
+    const offsets = [0, 15, 30, 15, 0, -15, -30, -15];
+
+    // Draw the bricks
+    for (let row = 0; row < numRows; row++) {
+        const xOffset = offsets[row % offsets.length] - boxWidth;
+        
+        for (let col = 0; col < numCols; col++) {
+            // Alternate black and white bricks
+            ctx.fillStyle = (col % 2 === 0) ? "#000000" : "#ffffff";
+            ctx.fillRect(col * boxWidth + xOffset, row * rowHeight, boxWidth, rowHeight);
+        }
+    }
+
+    // Draw the perfect, horizontal gray grout lines that will look crooked
+    ctx.strokeStyle = "#8f8f8f";
+    ctx.lineWidth = 3;
+    for (let row = 0; row <= numRows; row++) {
+        ctx.beginPath();
+        ctx.moveTo(0, row * rowHeight);
+        ctx.lineTo(canvas.width, row * rowHeight);
+        ctx.stroke();
+    }
+}
+
+// --- ILLUSION 3: HERMANN GRID ---
+function drawGrid() {
+    ctx.fillStyle = "#000000"; // Pitch black background
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const squareSize = 65;
+    const gutter = 15; // Width of the white streets
+    
+    ctx.fillStyle = "#ffffff";
+
+    // Draw horizontal streets
+    for (let y = gutter; y < canvas.height; y += squareSize + gutter) {
+        ctx.fillRect(0, y + squareSize, canvas.width, gutter);
+    }
+    
+    // Draw vertical streets
+    for (let x = gutter; x < canvas.width; x += squareSize + gutter) {
+        ctx.fillRect(x + squareSize, 0, gutter, canvas.height);
+    }
+}
+
+// --- MASTER CONTROLLER ---
+function draw() {
+    if (currentIllusion === "peripheral") drawPeripheral();
+    else if (currentIllusion === "cafewall") drawCafeWall();
+    else if (currentIllusion === "grid") drawGrid();
+}
+
+select.addEventListener("change", (e) => {
+    currentIllusion = e.target.value;
+    draw();
+});
+
+window.addEventListener("resize", resize);
+resize();
+</script>
+
+</body>
+</html>
